@@ -7,9 +7,18 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-g",
-                "${workspaceFolder}/hud.cpp",
+                "${workspaceFolder}/main.cpp",
+                "${workspaceFolder}/Hud.cpp",
+                "${workspaceFolder}/CommandInvoker.cpp",
+                "${workspaceFolder}/RecvCommand.cpp",
+                "${workspaceFolder}/SendCommand.cpp",
+                "${workspaceFolder}/UDPChannel.cpp",
                 "-o",
                 "${workspaceFolder}/hud",
+                "-ljsoncpp",
+                "-lpthread",
+                "-L/usr/include/jsoncpp",
+                "-I/usr/include"
             ],
             "group": {
                 "kind": "build",
