@@ -1659,6 +1659,17 @@ https://github.com/ambersoj/hud
 local directory:
 /usr/local/mpp/hud
 
-and there are corresponding repos and work directories for cmd, cnl and net.
+and there are corresponding repos and work directories for cmd, cnl and net.  When it comes time I'd like your help with the git part of this code migration.
 
+Once all the repos and work directories are in the same state as hud then I'll just go around and change thinkgs in main.cpp and change Hud.cpp and Hud.hpp appropriately and so forth.  I don't think I'll attempt automating any of that process by using sed or find/replace though... I'll just do it manually.  But would now be a good time for us to sit down and figure out which code will now be static for the most part and compile it all up into a library to link against leaving only the bit of the code base that needs customized per component out of the library to be compiled and linked in later to compose each component?
+
+I've got the hud repo current locally and remotely so it's safe for us to do anything right now.
+
+//////////////////////////////////////////////////
+
+Wow, partner, I'm very happy with the help you've given me.  This list of files that make up this project is really very very nice and small... especially considering what potential this package has.  Thanks for the work.
+
+I ran the same stuff I did before the mpp lirary was made so I'll consider it tested, at least good enough for me for now.
+
+So I suppose it really is time now to finally replicate hud all through the other component repos and directories and whatnot.  Can you help me through that doing one of the components at a time.  Remember the very very first thing
 
