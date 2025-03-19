@@ -6,11 +6,11 @@
 
 class SendCommand : public Command {
 public:
-    SendCommand(UDPChannel &channel, const std::string &dst_ip, int dst_port, const std::string &message);
+    SendCommand(UDPChannel &src_port, const std::string &dst_ip, int dst_port, const std::string &message);
     std::string execute() override;
 
 private:
-    UDPChannel &channel;
+    UDPChannel &src_port;
     std::string dst_ip;
     int dst_port;
     std::string message;

@@ -6,9 +6,9 @@
 
 class RecvCommand : public Command {
 private:
-    UDPChannel& channel;
+    UDPChannel& src_port;
 public:
-    explicit RecvCommand(UDPChannel& channel);
+    explicit RecvCommand(UDPChannel& src_port);
     std::string execute() override;
 };
 

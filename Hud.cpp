@@ -1,10 +1,9 @@
 #include "Hud.hpp"
+#include "globals.hpp"
 #include "mpp_defines.hpp"
 #include <ncurses.h>
 #include <chrono>
 #include <thread>
-
-std::atomic<bool> running(true);
 
 // Hud Component
 Hud::Hud() : spinner_on(false), channels(nullptr), invoker(nullptr) {}
@@ -51,7 +50,7 @@ void Hud::run() {
     curs_set(0);
     timeout(100); // Non-blocking input
 
-    while (running) {
+    while (hud_running) {
         std::string msg = receive_msg_from_cnl();
         if (!msg.empty()) {
             Json::CharReaderBuilder reader;
@@ -79,7 +78,7 @@ void Hud::start(std::unordered_map<int, UDPChannel>& channels, CommandInvoker& i
 }
 
 void Hud::stop() {
-    running.store(false);
+    hud_running.store(false);
     if (hudThread.joinable()) {
         hudThread.join();
     }

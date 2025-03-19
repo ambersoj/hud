@@ -17,6 +17,7 @@
                 "${workspaceFolder}/hud",
                 "-ljsoncpp",
                 "-lpthread",
+                "-lncurses",
                 "-L/usr/include/jsoncpp",
                 "-I/usr/include"
             ],

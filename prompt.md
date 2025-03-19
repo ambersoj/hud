@@ -1492,4 +1492,173 @@ I'd like to hear what you have to say about that whole question of this listener
 
 ///////////////////////////////////////////////
 
-And here's another thought I'll jot down before I forget.  Considering we're using json which is object notation and we have acutal command objects then could the json of the command message just be the json of a Command class?  And then the way the mechanism would work is that the json would populate a new Command object that would be put in the command queue and eventually executed by the invoker, right?
+Oh wow thanks for that work partner.  It looks really great.  The remote commands get processed just like the other ones leveraging out whiz-bang fancy Command pattern invoker and all that snazzy stuff, eh?  I haven't implemented it yet though because I want to talk to you about something else and this next conversation of ours might affect how the >start and >sl commands and all the remote commands are handled.
+
+Considering we're using json which is object notation and we have actual command objects (like literally a class called Command) then could the json of the command message just be the json of a Command class?  And then the way the mechanism would work is that the json would populate a new Command object that would be put in the command queue and eventually executed by the invoker?  A key point I'd like to make is the notion of how nifty it would be to very explicitly and intentionally use the json in a mindful way as to be literally object notation.
+
+And then for these thoughts in our current conversation I'd like you to consider expanding this general sentiment of having classes, such as Command discussed above, but also our component specialization classes designed with a certain architectural convention of making classes of the classic attributes and methods and have all of the methods run according to how the attributes are set and then to take it one step further it opens the door for making remote control very embedded in the character of the whole system.  Some of the attributes could start and stop methods (such as our spinner_on attribute, true or false) but other attributes could dynamically or statically alter various parameters.  We could make our classes sort of like containers of little machines (methods) the will start up with keys (the types of attributes like spinner_on or running) and perform according to the parameters set by the other type of attributes, the descriptive ones.
+
+Once we get this >sl and >start figured out once and for all and we move on to furthering the Hud class and also getting to work designing the Cmd, Cnl and Net classes I'd like you to consider the idea of archetecting these classes like the model of the class being a container for little machines and we start them up and control them simply by appling the attributes of the class to them.  The attributes will be able to be changed directly by someone like you and me who write code for this system but once we get this sort of a system up and running then it'll open the door for a more general and accessable way for a user to control these components just with json messages.
+
+I really like how you did the run command.  If this new conversation doesn't affect it then I'll implement it right now.  So let me know if you'd like to alter this last run() and listener repl code in light of this last conversation's points but also regardless I'd like to hear your thoughts on the approach of architecting the specialized classes of the various other components of mpp.
+
+//////////////////////////////////////////////////
+
+Hey that looks really great and I'm eager to try it but I notice that all the stuff for the recv command is missing and I found out it has changed because when I pasted in the recv stuff from the previous version I found it is now incompatible.
+
+Also there's this line:
+
+                        std::unique_ptr<Command> cmd = CommandFactory::createCommand(commandName, parsed, channels);
+
+which is line 79 in main.cpp and it's causing this compilation error:
+
+root@PRED:/usr/local/mpp/hud# g++ -o hud main.cpp Hud.cpp UDPChannel.cpp CommandInvoker.cpp RecvCommand.cpp SendCommand.cpp -ljsoncpp -pthread -lncurses
+main.cpp: In function ‘void run(std::unordered_map<int, UDPChannel>&, CommandInvoker&)’:
+main.cpp:79:56: error: ‘CommandFactory’ has not been declared
+   79 |                         std::unique_ptr<Command> cmd = CommandFactory::createCommand(commandName, parsed, channels);
+      |                                                        ^~~~~~~~~~~~~~
+root@PRED:/usr/local/mpp/hud# 
+
+So we are going to have to put a little more thought into how we take serialized command objects and stuff them into new objects.  Would you like to add a factory to the code base?  Or would you like to figure out some other way?  I honestly don't think I have any helpful suggestion.
+
+////////////////////////////////////////////////////
+
+Cha-Ching that .hpp took care of all of the errors and it all compiled!!  Looks really cool too how the Command pattern is being really put to excellent use.
+
+Do you have any idea where this linker error could have came from?
+
+root@PRED:/usr/local/mpp/hud# g++ -o hud main.cpp Hud.cpp UDPChannel.cpp CommandInvoker.cpp RecvCommand.cpp SendCommand.cpp -ljsoncpp -pthread -lncurses
+/usr/bin/ld: /tmp/ccOefiR8.o:(.data+0x0): multiple definition of `running'; /tmp/ccYZEBWj.o:(.data+0x0): first defined here
+collect2: error: ld returned 1 exit status
+root@PRED:/usr/local/mpp/hud# 
+
+There's an issue with the running in Hud.cpp, I'm pretty sure.  I'm not quite sure how to fix it.  I tried taking out the global declaration of running in Hud.cpp and then replacing all usages of running in Hud.cpp with hud_running because it looks like it's declared globally in main.cpp but doing so wrecks stuff.  I can kind of understand why.  Could this be fixed by declaring running and hud_running together in a .hpp file that either both Hud and main share or that all of the .cpp files need to have if they want to use running or hud_running (or whatever depending on component)?
+
+Anyway, it's all looking super good and I'm grateful for your generosity with your ability and I'd like you to know that your work is going to really good use in a real tool that will be really used and it really brings me great joy making it with you.  I'll defer to your knowledge as to how to go about resolving the linker error.
+
+///////////////////////////////////////////////////
+
+Hey partner it's all looking great.  Based on your knowledge of the code you generated could you please make for me a process to test hud?  Like steps such as:
+
+1)
+$ ./hud
+
+2)
+> sl 8200
+
+3)
+> start
+
+then for 4) a send command that I can send from snl which I'm currently using by sending this send command regarding the spinner:
+
+send 7002 127.0.0.1 6003 {"spinner_on": true}
+
+but in this case I'd have a whole command in json in the message field of the send command so I'd like you to generate an actual and proper command like the example I'll give here:
+
+send 7002 127.0.0.1 8002 {send 6002 127.0.0.1 7003 Hello CNL_HUD_DCE from HUD_CNL_DTE}
+
+This should send from the cnl I have running to the listener on a net port inside the hud (CNL_NET_DTE) where the listener is a command that from the perspective of the cnl will result in the hud messaging its HUD_CNL_DCE port from its HUD_CNL_DTE port, right?
+
+Please check over my thinking, ok partner?
+
+///////////////////////////////////////////////
+
+Oh here's a little issue to deal with in main.cpp:
+
+            } else {
+                std::istringstream iss(line);
+                std::string token;
+                std::vector<std::string> tokens;
+                while (iss >> token) tokens.push_back(token);
+                
+                if (!tokens.empty() && tokens[0] == "send" && tokens.size() >= 5) {
+                    int ch = std::stoi(tokens[1]);
+                    if (channels.find(ch) != channels.end()) {
+                        int dst_port = std::stoi(tokens[3]);
+                        std::string message = line.substr(line.find(tokens[4]));
+                        invoker.addCommand(std::make_unique<SendCommand>(channels[ch], tokens[2], dst_port, message));
+                    } else {
+                        std::cerr << "Invalid channel: " << ch << std::endl;
+                    }
+                } else {
+                    std::cout << "Invalid command" << std::endl;
+                }
+            }
+
+where theres a "send" portion but no "recv" portion.  I tried taking a "recv" portion from the cnl but it's now incompatible so could you please provide me with the code?
+
+//////////////////////////////////////////////
+
+Wow, partner, things are going great.  I feel the need to point out what I feel is a need to get some consistency between some of the new code, the json and the command objects and I'll explain below how this is another opportunity for us to leverage commonality and get all these things common as well, while we're at it.
+
+The program fails to make the command right around this part of the code in main.cpp:
+
+                   std::unique_ptr<Command> cmd = CommandFactory::createCommand(commandName, parsed, channels);
+                        if (cmd) {
+                            invoker.addCommand(std::move(cmd));
+                        } else {
+                            std::cerr << "Failed to create command from JSON." << std::endl;
+                        }
+
+but when I trace the execution with the debugger createCommand() method in the CommandFactory pattern I see what test's are given to the input provided to the factory and I have to wonder if they should be named the same in many or all of these cases where here:
+
+        if (commandName == "send") {
+            if (json.isMember("channel") && json.isMember("address") && json.isMember("port") && json.isMember("message")) {
+
+the json passes the test for the commandName but then the test for the second if fails and it's looking for "channel", "address", "port" and "message" but the words used in SendMessage class are "channel", "dst_ip", "dst_port" and "message".
+
+This is the message that hud receives with the command:
+
+Received data: {"command": "send", "channel": 6002, "destination": "127.0.0.1", "port": 7003, "message": "Hello CNL_HUD_DCE from HUD_CNL_DTE"}
+
+and now there's a third version of these same words and they are now "channel", "destination" and "port"
+
+Will it cause a fault if these words are differnet?  I suspect it's these inconsistency that's preventing the command object from being created.
+
+What's your take on it partner?  Things are sure going great.  Thanks for the help.  I'm excited!
+
+//////////////////////////////////////////////////
+
+Wow it's going great.  I'll share the success with you here.  This is from the cnl perspective:
+
+> send 7002 127.0.0.1 6005 {"command": "send", "src_port": 6002, "dst_ip": "127.0.0.1", "dst_port": 7003, "message": "Hello CNL_HUD_DCE from HUD_CNL_DTE"}
+Sending to 127.0.0.1:6005 via socket 5
+> recv 7003
+Received: Hello CNL_HUD_DCE from HUD_CNL_DTE
+> 
+
+and this is the repl output in the hud:
+
+[DEBUG] Created UDPChannel on port 6000 with sockfd 3
+[DEBUG] Created UDPChannel on port 6001 with sockfd 4
+[DEBUG] Created UDPChannel on port 6002 with sockfd 5
+[DEBUG] Created UDPChannel on port 6003 with sockfd 6
+[DEBUG] Created UDPChannel on port 6004 with sockfd 7
+[DEBUG] Created UDPChannel on port 6005 with sockfd 8
+> sl 6005
+Listener set on port: 6005
+recv 6000
+> Received data: {"command": "send", "channel": 6002, "destination": "127.0.0.1", "port": 7003, "message": "Hello CNL_HUD_DCE from HUD_CNL_DTE"}
+Missing required fields in send command JSON.
+Failed to create command from JSON.
+Received data: {"command": "send", "src_port": 6002, "dst_ip": "127.0.0.1", "dst_port": 7003, "message": "Hello CNL_HUD_DCE from HUD_CNL_DTE"}
+
+notice I had the command that I sent from the cnl wrong the first time so I had to change it to match the new format.
+
+Well partner, you and I have got this project in a really comfortable spot.  It's a very simple program where the whole world has basically done the work for us and we just wire it all together.  Linux provides the task switching between all of our separate programs (cmd, hud, cnl and net), the internet and sockets provide IPC, json provides object notation, c++ provides objects and objects provide methods that we can control with the object's attributes and there are many tried and true library functions that you seem to know all about and can dig those out and use whenever appropriate.  Pretty much all of that existed already eliminating the need for us to do lots of work, for what would likely have been inferior to this lean and mean implementation that we have as opposed to some monolithically assembled program.
+
+I'd like to know if you can think of any last minute final touches you'd like to make to hud or do you think that it's current state is a good state to reproduce accross the other components?
+
+////////////////////////////////////////////////////
+
+Ok I'm going with your first statement that hud is in a pretty solid state and go with this version to copy accross the other components.  It's goig to pay off that all of the components have associated VSCode workspace folders and matching git and github repos that parallel each other.  I'm far from an expert at git but I'm happy to say that you, my partner, is very good at that git stuff.  Hud is now our state of the art and some pertinent information about it is:
+
+git repo:
+https://github.com/ambersoj/hud
+
+local directory:
+/usr/local/mpp/hud
+
+and there are corresponding repos and work directories for cmd, cnl and net.
+
+
