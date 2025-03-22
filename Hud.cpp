@@ -1,20 +1,23 @@
 #include "Hud.hpp"
 #include "globals.hpp"
 #include "mpp_defines.hpp"
+#include "MPPCommands.hpp"
 #include <ncurses.h>
 #include <chrono>
 #include <thread>
 
+std::atomic<bool> hud_running;
+
 // Hud Component
-Hud::Hud() : spinner_on(false), channels(nullptr), invoker(nullptr) {}
+Hud::Hud() : spinner_on(false), sockets(nullptr), invoker(nullptr) {}
 
 std::string Hud::receive_msg_from_cnl() {
-    if (!channels) {
+    if (!sockets) {
         std::cerr << "Error: channels not initialized in Hud!" << std::endl;
         return "";
     }
 
-    RecvCommand recvCmd((*channels)[HUD_CNL_DCE]);
+    RecvCommand recvCmd((*sockets)[HUD_CNL_DCE]);
     return recvCmd.execute();
 }
 
@@ -71,8 +74,8 @@ void Hud::run() {
     endwin();
 }
 
-void Hud::start(std::unordered_map<int, UDPChannel>& channels, CommandInvoker& invoker) {
-    this->channels = &channels;
+void Hud::start(std::unordered_map<int, UDPSocket>& sockets, CommandInvoker& invoker) {
+    this->sockets = &sockets;
     this->invoker = &invoker;
     hudThread = std::thread(&Hud::run, this);
 }
