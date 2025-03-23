@@ -1,7 +1,7 @@
 #include "MPPCommands.hpp"
 
 std::string StartCommand::execute() {
-    MPPNode::getInstance().start(invoker);
+    MPPNode::getInstance().start();
     return "MPPNode started.";
 }
 
@@ -35,5 +35,28 @@ SendCommand::SendCommand(UDPSocket &src_port, const std::string &dst_ip, int dst
 
 std::string SendCommand::execute() {
     src_port.send(dst_ip, dst_port, message);
-    return "";
+    return "[INFO] SendCommand executed";
 }
+
+std::string UpdateHudCommand::execute() {
+    std::ostringstream oss;
+    oss << jsonData;
+    hud.update(oss.str());
+    return "[INFO] UpdateHudCommand executed";
+}
+
+StartHudCommand::StartHudCommand(Hud& hud, std::unordered_map<int, UDPSocket>& sockets, const Json::Value& json)
+    : hud(hud), sockets(sockets), json(json) {}
+    
+std::string StartHudCommand::execute() {
+    hud.start(sockets);
+    hud.initializeFromJson(json.toStyledString());
+    return "[INFO] Hud started and initialized.";
+}
+
+std::string StopHudCommand::execute() {
+    hud.shutdownNcurses();
+    hud.stop();
+    return "[INFO] Hud stopped.";
+}
+ 

@@ -16,17 +16,16 @@ class Hud {
 public:
     Hud();
 
-    void start(std::unordered_map<int, UDPSocket>& sockets);
+    void start(std::unordered_map<int, UDPSocket>& sockets, CommandInvoker& invoker);
     void stop();
-    void initializeFromJson(const std::string& jsonMsg);
-    void shutdownNcurses();
 
     void update(const std::string& jsonMsg);
 
     void setSpinnerState(const std::string& state);
 
 private:
-std::atomic<bool> running;
+CommandInvoker* invoker;
+std::atomic<bool> isRunning;
 std::thread hudThread;
 std::unordered_map<int, UDPSocket>* sockets;
 std::queue<std::string> hudCommandQueue;

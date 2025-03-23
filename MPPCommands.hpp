@@ -56,4 +56,36 @@ class SendCommand : public Command {
         std::string message;
 };
 
+class UpdateHudCommand : public Command {
+    public:
+        UpdateHudCommand(Json::Value jsonData, Hud& hud) : jsonData(jsonData), hud(hud) {}
+    
+        std::string execute() override;
+    
+    private:
+        Json::Value jsonData;
+        Hud& hud;
+};
+
+class StartHudCommand : public Command {
+    public:
+        StartHudCommand(Hud& hud, std::unordered_map<int, UDPSocket>& sockets, const Json::Value& json);
+        std::string execute() override;
+        
+    private:
+        Hud& hud;
+        std::unordered_map<int, UDPSocket>& sockets;
+        Json::Value json;
+};
+
+class StopHudCommand : public Command {
+    public:
+        StopHudCommand(Hud& hud) : hud(hud) {}
+    
+        std::string execute();
+    private:
+        Hud& hud;
+};
+    
+        
 #endif // MPP_COMMANDS_HPP

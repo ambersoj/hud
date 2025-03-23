@@ -1,33 +1,18 @@
-#include "UDPSocket.hpp"
 #include "MPPNode.hpp"
-#include "CommandInvoker.hpp"
-#include "MPPCommands.hpp"
+#include "mpp_defines.hpp"
 #include <iostream>
 
-std::atomic<bool> running;
-
 int main() {
-    CommandInvoker invoker;
     MPPNode& node = MPPNode::getInstance();
-
-    node.start(invoker);
-
-    for (int i = 0; i < 6; i++) {
-        node.getSockets().emplace(6000 + i, UDPSocket(6000 + i));
-    }
-
-    node.run();
-    
-    std::cout << "MPPNode is running. Use UDP commands to control it.\n";
+    node.start();
 
     std::string command;
     while (true) {
-        std::cin >> command;
-        if (command == "exit") {
-            break;
+        if (std::cin >> command) {
+            if (command == "exit") break;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    node.stop();
     return 0;
 }

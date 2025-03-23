@@ -1,0 +1,18 @@
+tcpdump: data link type LINUX_SLL2
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on any, link-type LINUX_SLL2 (Linux cooked v2), snapshot length 262144 bytes
+14:50:28.441332 lo    In  IP localhost.58111 > localhost.6005: UDP, length 128
+	0x0000:  4500 009c cffa 4000 4011 6c54 7f00 0001  E.....@.@.lT....
+	0x0010:  7f00 0001 e2ff 1775 0088 fe9b 7b22 636f  .......u....{"co
+	0x0020:  6d6d 616e 6422 3a20 2273 656e 6422 2c20  mmand":."send",.
+	0x0030:  2273 7263 5f70 6f72 7422 3a20 3630 3032  "src_port":.6002
+	0x0040:  2c20 2264 7374 5f69 7022 3a20 2231 3237  ,."dst_ip":."127
+	0x0050:  2e30 2e30 2e31 222c 2022 6473 745f 706f  .0.0.1",."dst_po
+	0x0060:  7274 223a 2037 3030 332c 2022 6d65 7373  rt":.7003,."mess
+	0x0070:  6167 6522 3a20 2248 656c 6c6f 2043 4e4c  age":."Hello.CNL
+	0x0080:  5f48 5544 5f44 4345 2066 726f 6d20 4855  _HUD_DCE.from.HU
+	0x0090:  445f 434e 4c5f 4454 4522 7d0a            D_CNL_DTE"}.
+
+1 packet captured
+2 packets received by filter
+0 packets dropped by kernel

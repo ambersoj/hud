@@ -1,44 +1,65 @@
 #include "MPPNode.hpp"
+#include "Hud.hpp"
 #include "mpp_defines.hpp"
 #include "CommandFactory.hpp"
 #include "CommandInvoker.hpp"
-#include "Hud.hpp"
-#include "nlohmann/json.hpp"
+#include "jsoncpp/json/json.h"
 #include <iostream>
 #include <thread>
 
-using json = nlohmann::json;
-
 MPPNode::MPPNode() : running(false) {}
+
+void MPPNode::start() {
+    if (running) return;
+    running = true;
+
+    for (int i = 0; i < NUM_SOCKETS; i++) {
+        sockets.insert({HUD_PORT_BASE + i, UDPSocket(HUD_PORT_BASE + i)});
+    }
+
+    std::cout << "[INFO] MPPNode::start()\n";
+
+    invoker = new CommandInvoker();
+
+    run();
+
+    std::unique_ptr<Command> addListenerCmd = std::make_unique<AddListenerCommand>(BOOT_TIME_LISTENER_PORT);
+    addListenerCmd->execute();
+}
+
+void MPPNode::run() {
+    if (running) {
+        std::cout << "[INFO] MPPNode::run()\n";
+        if (!hud) {
+            hud = new Hud();
+        }
+        hud->start(sockets);
+    } else {
+        std::cout << "[INFO] MPPNode::run() failed with running = " << running << "\n";
+    }
+}
+
+void MPPNode::stop() {
+    running = false;
+    if (hud) {
+        hud->stop();
+        delete hud;
+        hud = nullptr;
+    }
+    std::cout << "[INFO] MPPNode stopped.\n";
+}
 
 MPPNode& MPPNode::getInstance() {
     static MPPNode instance;
     return instance;
 }
 
-void MPPNode::run() {
-    if (running) {
-        addCommandListener(BOOT_TIME_LISTENER);
-        Hud hud;
-        hud.start(sockets, *invoker);
-        std::cout << "[INFO] MPPNode::run(). Global running = " << running << "\n";
-    } else {
-        std::cout << "[INFO] MPPNode::run(). Global running = " << running << "\n";
-    }
-}
-
-void MPPNode::start(CommandInvoker& invoker) {
-    this->invoker = &invoker;
-    running = true;
-    std::cout << "[INFO] MPPNode started.\n";
-}
-
-void MPPNode::stop() {
-    running = false;
-    std::cout << "[INFO] MPPNode stopped.\n";
-}
-
 std::unordered_map<int, UDPSocket>& MPPNode::getSockets() {  
+    if (sockets.empty()) {
+        for (int i = 0; i < NUM_SOCKETS; i++) {
+            sockets.insert({HUD_PORT_BASE + i, UDPSocket(HUD_PORT_BASE + i)});
+        }
+    }
     return sockets;
 }
 
@@ -56,27 +77,41 @@ void MPPNode::addCommandListener(int port) {
                 if (!message.empty()) {
                     std::cout << "[DEBUG] Received command: " << message << std::endl;
 
-                    try {
-                        json root = json::parse(message);
-                        std::string commandName = root["command"];
+                    Json::CharReaderBuilder reader;
+                    Json::Value root;
+                    std::string errs;
+                    std::istringstream s(message);
+                        
+                    if (!Json::parseFromStream(reader, s, &root, &errs)) {
+                        std::cerr << "[ERROR] Failed to parse JSON: " << errs << std::endl;
+                        return;
+                    }
+                        
+                    std::string commandName = root.isMember("command") ? root["command"].asString() : "";
+                    if (commandName.empty()) {
+                        std::cerr << "[ERROR] Received JSON but 'command' field is missing or empty." << std::endl;
+                        return;
+                    }
+                                            
+                    Json::Value commandData = root;
 
-                        Json::Value commandData = Json::Value::null;
-                        std::istringstream(root.dump()) >> commandData;
+                    Json::StreamWriterBuilder writer;
+                    std::string commandStr = Json::writeString(writer, root);
+                    std::istringstream(commandStr) >> commandData;
+                    
 
-                        std::unique_ptr<Command> cmd = CommandFactory::createCommand(
-                            commandName,  
-                            commandData,  
-                            sockets,     
-                            *invoker      
-                        );
+                    std::unique_ptr<Command> cmd = CommandFactory::createCommand(
+                        commandName,  
+                        commandData,  
+                        sockets,     
+                        *invoker,
+                        *hud      
+                    );
 
-                        if (cmd) {
-                            cmd->execute();
-                        } else {
-                            std::cerr << "[ERROR] Unknown command type: " << commandName << std::endl;
-                        }
-                    } catch (json::parse_error& e) {
-                        std::cerr << "[ERROR] Failed to parse JSON: " << e.what() << std::endl;
+                    if (cmd) {
+                        cmd->execute();
+                    } else {
+                        std::cerr << "[ERROR] Unknown command type: " << commandName << std::endl;
                     }
                 }
             }
@@ -105,4 +140,8 @@ void MPPNode::removeCommandListener(int port) {
     } else {
         std::cout << "[WARNING] No command listener found on port " << port << "\n";
     }
+}
+
+CommandInvoker& MPPNode::getInvoker() {
+    return *invoker;
 }

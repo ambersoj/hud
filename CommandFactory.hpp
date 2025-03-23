@@ -9,12 +9,18 @@
 #include <memory>
 
 class CommandFactory {
+
+private:
+    Hud& hud;
+
 public:
+    CommandFactory(Hud& hud) : hud(hud) {}
     static std::unique_ptr<Command> createCommand(
         const std::string& commandName, 
         const Json::Value& json, 
         std::unordered_map<int, UDPSocket>& sockets,
-        CommandInvoker& invoker
+        CommandInvoker& invoker,
+        Hud& hud
     );
 };
 

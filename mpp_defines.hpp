@@ -1,4 +1,5 @@
 #define IP_ADDRESS "127.0.0.1"
+#define NUM_SOCKETS 6
 #define CMD_PORT_BASE 5000
 #define HUD_PORT_BASE 6000
 #define CNL_PORT_BASE 7000
@@ -27,5 +28,5 @@
 #define NET_HUD_DCE 8003
 #define NET_CNL_DTE 8004
 #define NET_CNL_DCE 8005
-#define BOOT_TIME_LISTENER 6005 // same as HUD_NET_DCE
+#define BOOT_TIME_LISTENER_PORT 6005 // same as HUD_NET_DCE
 

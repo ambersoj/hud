@@ -7,47 +7,25 @@
 #include <thread>
 
 Hud::Hud() {
-    running = false;
+    isRunning = false;
+    spinnerState = "off";
+    channelColor = "white";
+    direction = "down";
 }
 
-void Hud::start(std::unordered_map<int, UDPSocket>& sockets) {
-    if (running.load()) {
-        std::cerr << "[WARNING] Hud is already running!" << std::endl;
-        return;
-    }
-
-    if (sockets.empty()) {
-        std::cerr << "[ERROR] Sockets map is empty!" << std::endl;
-        return;
-    }
+void Hud::start(std::unordered_map<int, UDPSocket>& sockets, CommandInvoker& invoker) {
     this->sockets = &sockets;
-
-    running.store(true);
-    
-    try {
-        hudThread = std::thread(&Hud::run, this);
-    } catch (const std::exception& e) {
-        std::cerr << "[ERROR] Failed to start Hud thread: " << e.what() << std::endl;
-    }
+    this->invoker = &invoker;
+    isRunning.store(true);
+    hudThread = std::thread(&Hud::run, this);
 }
-
 
 void Hud::stop() {
-    running.store(false);
+    isRunning.store(false);
     if (hudThread.joinable()) {
         hudThread.join();
     }
 }
-
-void Hud::initializeFromJson(const std::string& jsonMsg) {
-    applyJsonCommand(jsonMsg);
-}
-
-void Hud::shutdownNcurses() {
-    // Cleanly shut down ncurses if it's running
-    // If ncurses is running, call endwin();
-}
-
 
 void Hud::update(const std::string& jsonMsg) {
     std::lock_guard<std::mutex> lock(hudQueueMutex);
@@ -63,14 +41,10 @@ void Hud::setSpinnerState(const std::string& state) {
 }
 
 void Hud::run() {
-    try {
-        while (running.load()) {
-            processQueue();
-            draw();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "[ERROR] Exception in Hud::run: " << e.what() << std::endl;
+    while (isRunning.load()) {
+        processQueue();
+        draw();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 

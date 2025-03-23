@@ -1,10 +1,13 @@
 #include "CommandFactory.hpp"
 #include <iostream>
 
-std::unique_ptr<Command> CommandFactory::createCommand(const std::string& commandName, 
-                                                       const Json::Value& json, 
-                                                       std::unordered_map<int, UDPSocket>& sockets,
-                                                       CommandInvoker& invoker) {
+std::unique_ptr<Command> CommandFactory::createCommand(
+    const std::string& commandName,
+    const Json::Value& json,
+    std::unordered_map<int, UDPSocket>& sockets,
+    CommandInvoker& invoker,
+    Hud& hud
+) {
     if (commandName == "send") {
         if (json.isMember("src_port") && json.isMember("dst_ip") && 
             json.isMember("dst_port") && json.isMember("message")) {
@@ -41,11 +44,24 @@ std::unique_ptr<Command> CommandFactory::createCommand(const std::string& comman
     else if (commandName == "stop") {
         return std::make_unique<StopCommand>();
     } 
-    else if (commandName == "al") {
+    else if (commandName == "addListener") {
         return std::make_unique<AddListenerCommand>(json["port"].asInt());
     }
-    else if (commandName == "rl") {
+    else if (commandName == "removeListener") {
         return std::make_unique<RemoveListenerCommand>(json["port"].asInt());
+    }
+    else if (commandName == "updateHud") {
+        return std::make_unique<UpdateHudCommand>(json, hud);
+    }
+
+    else if (commandName == "updateHud") {
+        return std::make_unique<UpdateHudCommand>(json, hud);
+    } 
+    else if (commandName == "startHud") {
+        return std::make_unique<StartHudCommand>(hud, sockets, json);
+    } 
+    else if (commandName == "stopHud") {
+        return std::make_unique<StopHudCommand>(hud);
     }
     else {
         std::cerr << "Unknown command: " << commandName << std::endl;
