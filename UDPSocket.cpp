@@ -5,12 +5,6 @@
 #include <arpa/inet.h>
 
 UDPSocket::UDPSocket(int port) {
-    int existingSockfd = MPPNode::getInstance().getSockfdForPort(port);
-    if (existingSockfd != -1) {
-        sockfd = existingSockfd;
-        return;
-    }
-
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         perror("Socket creation failed");

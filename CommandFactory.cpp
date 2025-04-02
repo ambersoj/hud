@@ -1,12 +1,15 @@
-#include "CommandFactory.hpp"
-#include <iostream>
+# include "CommandFactory.hpp"
+# include <iostream>
+# include <jsoncpp/json/json.h>
+# include <queue>
+# include <mutex>
+# include <thread>
 
 std::unique_ptr<Command> CommandFactory::createCommand(
     const std::string& commandName,
     const Json::Value& json,
     std::unordered_map<int, UDPSocket>& sockets,
-    CommandInvoker& invoker,
-    Hud& hud
+    CommandInvoker& invoker
 ) {
     if (commandName == "send") {
         if (json.isMember("src_port") && json.isMember("dst_ip") && 
@@ -19,10 +22,12 @@ std::unique_ptr<Command> CommandFactory::createCommand(
             if (sockets.find(src_port) != sockets.end()) {
                 return std::make_unique<SendCommand>(sockets[src_port], dst_ip, dst_port, message);
             } else {
-                std::cerr << "Invalid src_port: " << src_port << std::endl;
+                std::cerr << "[ERROR] No socket found for src_port: " << src_port << std::endl;
+                return nullptr;
             }
         } else {
-            std::cerr << "Missing required fields in send command JSON." << std::endl;
+            std::cerr << "[ERROR] Missing required fields in send command JSON." << std::endl;
+            return nullptr;
         }
     } 
     else if (commandName == "recv") {
@@ -32,40 +37,16 @@ std::unique_ptr<Command> CommandFactory::createCommand(
             if (sockets.find(src_port) != sockets.end()) {
                 return std::make_unique<RecvCommand>(sockets[src_port]);
             } else {
-                std::cerr << "Invalid src_port: " << src_port << std::endl;
+                std::cerr << "[ERROR] No socket found for src_port: " << src_port << std::endl;
+                return nullptr;
             }
         } else {
-            std::cerr << "Missing required field 'src_port' in recv command JSON." << std::endl;
+            std::cerr << "[ERROR] Missing required field 'src_port' in recv command JSON." << std::endl;
+            return nullptr;
         }
     } 
-    else if (commandName == "start") {
-        return std::make_unique<StartCommand>(invoker);
-    }
-    else if (commandName == "stop") {
-        return std::make_unique<StopCommand>();
-    } 
-    else if (commandName == "addListener") {
-        return std::make_unique<AddListenerCommand>(json["port"].asInt());
-    }
-    else if (commandName == "removeListener") {
-        return std::make_unique<RemoveListenerCommand>(json["port"].asInt());
-    }
-    else if (commandName == "updateHud") {
-        return std::make_unique<UpdateHudCommand>(json, hud);
-    }
-
-    else if (commandName == "updateHud") {
-        return std::make_unique<UpdateHudCommand>(json, hud);
-    } 
-    else if (commandName == "startHud") {
-        return std::make_unique<StartHudCommand>(hud, sockets, json);
-    } 
-    else if (commandName == "stopHud") {
-        return std::make_unique<StopHudCommand>(hud);
-    }
     else {
-        std::cerr << "Unknown command: " << commandName << std::endl;
+        std::cerr << "[ERROR] Unknown command: " << commandName << std::endl;
+        return nullptr;
     }
-
-    return nullptr;
 }

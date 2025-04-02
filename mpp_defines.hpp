@@ -28,5 +28,4 @@
 #define NET_HUD_DCE 8003
 #define NET_CNL_DTE 8004
 #define NET_CNL_DCE 8005
-#define BOOT_TIME_LISTENER_PORT 6005 // same as HUD_NET_DCE
 

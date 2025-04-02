@@ -1,11 +1,11 @@
 #include "MPPNode.hpp"
-#include "mpp_defines.hpp"
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 int main() {
     MPPNode& node = MPPNode::getInstance();
-    
-    node.start();
+
     std::string command;
     while (true) {
         if (std::cin >> command) {
@@ -16,4 +16,3 @@ int main() {
 
     return 0;
 }
-
