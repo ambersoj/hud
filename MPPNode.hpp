@@ -1,23 +1,30 @@
 #ifndef MPPNODE_HPP
 #define MPPNODE_HPP
 
-#include <unordered_map>
 #include "UDPSocket.hpp"
-#include "CommandInvoker.hpp"
+#include "MessageFIFO.hpp"
+#include <unordered_map>
+#include <thread>
+#include <vector>
+#include <atomic>
 
 class MPPNode {
-private:
-    std::unordered_map<int, UDPSocket> sockets;
-    CommandInvoker invoker;
-
 public:
-    MPPNode();
-    ~MPPNode() = default;
-
-    std::unordered_map<int, UDPSocket>& getSockets();
-    CommandInvoker& getInvoker();
-
     static MPPNode& getInstance();
+    void send(int src_socket, const std::string& dst_ip, int dst_socket, const std::string& message);
+    std::string recv(int dst_socket);
+    void stop();
+
+private:
+    MPPNode();
+    ~MPPNode();
+    void listenerThread(int socket);
+
+    std::unordered_map<int, UDPSocket> sockets;
+    std::unordered_map<int, MessageFIFO> fifos;
+    std::vector<std::thread> threads;
+
+    std::atomic<bool> running;
 };
 
 #endif

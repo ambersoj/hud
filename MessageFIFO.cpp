@@ -1,5 +1,7 @@
 #include "MessageFIFO.hpp"
 
+MessageFIFO::MessageFIFO() = default;
+
 void MessageFIFO::enqueue(const std::string& message) {
     std::lock_guard<std::mutex> lock(mutex_);
     queue_.push(message);

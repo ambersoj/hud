@@ -16,7 +16,7 @@ public:
     UDPSocket(int port);
     ~UDPSocket();
 
-    // Delete copy constructor & assignment operator (prevents multiple instances sharing the same socket)
+    // Delte copy constructor & assignment operator (prevents multiple instances sharing the same socket)
     UDPSocket(const UDPSocket&) = delete;
     UDPSocket& operator=(const UDPSocket&) = delete;
 
